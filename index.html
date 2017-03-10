@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>jsTree test</title>
+  <!-- 2 load the theme CSS file -->
+  <link rel="stylesheet" href="./dist/themes/default/style.min.css" />
+</head>
+<body>
+  <!-- 3 setup a container element -->
+  <div id="jstree">
+
+  </div>
+
+  <!-- 4 include the jQuery library -->
+  <script src="./dist/libs/jquery.js"></script>
+  <!-- 5 include the minified jstree source -->
+  <script src="./dist/jstree.min.js"></script>
+  <link rel="stylesheet" href="./dist/bootstrap/css/bootstrap.min.css">
+  <script src="./dist/bootstrap/js/bootstrap.min.js"></script>
+  <script>
+  $(function () {
+  	$('#jstree').jstree({
+  		'core' : {
+  			'data' : {
+          "animation" : 20,
+          "check_callback" : true,
+          "themes" : { "stripes" : true },
+  				"url" : function (node) {
+                         //console.log("NODE "+JSON.stringify(node));
+                         if(node.id == "#" || node.parent == null || node.parents.length == 0){ //Top Level
+                             return("http://localhost:3000/jstrTestAPI");
+                         }else if(node.parent == "#" ){ //Root
+                             return("http://localhost:3000/jstrTestAPI?repo="+node.text);
+                         }else if(node.parents.length > 0){//Child
+                             var selectedNodeId = node.id;
+                             var selectedNodeText = node.text;
+                             var selectedNodeParents = node.parents;
+                             return("http://localhost:3000/jstrTestAPI?repo="+getTreePath(selectedNodeText,selectedNodeParents));
+                         }
+
+                },
+  				'data' : function (node) {
+                            //console.log("DATA NODE "+JSON.stringify(node));
+                            return { 'id' : node.id };
+                          }
+  				}
+  			},
+        "types" : {
+                "file" : {
+                  "icon" : "glyphicon glyphicon-file",
+                  "valid_children" : []
+                }
+              },
+        "plugins" : [
+                    "contextmenu", "dnd", "search",
+                    "state", "types", "wholerow"
+                  ]
+
+  	});
+
+    $("#jstree").on("click", ".jstree-anchor", function(e) {
+      //console.log("CLICKED "+JSON.stringify($("#jstree").jstree(true).get_node($(this))));
+      var id = $("#jstree").jstree(true).get_node($(this)).id;
+      var text = $("#jstree").jstree(true).get_node($(this)).text;
+      var parents = $("#jstree").jstree(true).get_node($(this)).parents;
+      var selectedNodePath = getTreePath(text,parents);
+      console.log("CLICKED : selectedNodePath = "+selectedNodePath);
+
+    });
+
+    function getTreePath(selectedNodeText,selectedNodeParents) {
+      //console.log("selectedNodeText "+selectedNodeText);
+      //console.log("selectedNodeParents "+selectedNodeParents);
+      try{
+        var lnLevel = selectedNodeParents.length;
+        var path = "";
+        for (var i = lnLevel -1; i >=0  ; i--) {
+            if(selectedNodeParents[i] == "#"){
+                path+="";
+            }else{
+              var pNode = $("#"+selectedNodeParents[i]).children('.jstree-anchor')[0];
+              path += pNode.text+"/";
+            }
+        }
+        path += selectedNodeText;
+        //console.log("path = "+path);
+        return(path);
+       }
+      catch (err) {
+           alert('Error in getTreePath '+err);
+           return("Error");
+       }
+    }
+  });
+
+
+  //No Need to make ajax calls explicitly
+  //      $.ajax({
+  //              async: true,
+  //              type: "GET",
+  //              url: "http://localhost:3000/jstrTestAPI?repo="+selectedNodePath,
+  //              dataType: "json",
+  //              success: function (json) {
+  //                  console.log("Success ",json,data);
+  //                  console.log( $("#"+data.node.id));
+  //                  //var tree = $('#jstree').jstree(true);
+  //                  $("#jstree").jstree("create_node", $("#"+data.node.id), "inside", json, false, false);
+  //                  //$("#jstree").jstree("create", $(data.node.id), "inside",  json,
+  //                          //function() { alert("added"); }, true);
+  //
+  //              },
+  //              error: function (xhr, ajaxOptions, thrownError) {
+  //                  alert(xhr.status);
+  //                  alert(thrownError);
+  //              }
+  //          });
+
+  </script>
+</body>
+</html>
